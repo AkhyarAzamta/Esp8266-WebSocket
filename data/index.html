@@ -11,11 +11,22 @@
   <button onclick="sendMessage('LED_OFF')">Matikan LED</button>
   <p>Status LED: <span id="status"><i>Menghubungkan...</i></span></p>
 
+  <h2>Set Alarm</h2>
+  <input type="time" id="alarmTime">
+  <button onclick="setAlarm()">Set Alarm</button>
+  <button onclick="clearAlarm()">Clear Alarm</button>
+
+  <h2>Waktu Sekarang</h2>
+  <p id="currentTime"><i>Mengambil waktu...</i></p>
+
   <script>
     var gateway = `ws://${window.location.hostname}/ws`;
     var websocket;
 
-    window.addEventListener("load", initWebSocket);
+    window.addEventListener("load", () => {
+      initWebSocket();
+      updateCurrentTime();
+    });
 
     function initWebSocket() {
       console.log("Menghubungkan ke WebSocket...");
@@ -56,6 +67,27 @@
       } else {
         console.error("WebSocket tidak terhubung.");
       }
+    }
+
+    function setAlarm() {
+      let time = document.getElementById("alarmTime").value;
+      if (time) {
+        websocket.send("SET_ALARM:" + time);
+        console.log("Alarm diset ke:", time);
+      }
+    }
+
+    function clearAlarm() {
+      websocket.send("CLEAR_ALARM");
+      console.log("Alarm dihapus");
+    }
+
+    function updateCurrentTime() {
+      setInterval(() => {
+        const now = new Date();
+        const timeString = now.toLocaleTimeString("id-ID", { hour12: false });
+        document.getElementById("currentTime").innerText = `Waktu: ${timeString}`;
+      }, 1000); // Update setiap detik
     }
   </script>
 </body>
