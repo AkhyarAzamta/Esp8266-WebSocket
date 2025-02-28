@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ESP8266 WebSocket LED Control</title>
+</head>
+<body>
+  <h2>Kontrol LED</h2>
+  <button onclick="sendMessage('LED_ON')">Nyalakan LED</button>
+  <button onclick="sendMessage('LED_OFF')">Matikan LED</button>
+  <p>Status LED: <span id="status"><i>Menghubungkan...</i></span></p>
+
+  <script>
+    var gateway = `ws://${window.location.hostname}/ws`;
+    var websocket;
+
+    window.addEventListener("load", initWebSocket);
+
+    function initWebSocket() {
+      console.log("Menghubungkan ke WebSocket...");
+      websocket = new WebSocket(gateway);
+
+      websocket.onopen = function () {
+        console.log("Terhubung ke WebSocket!");
+        document.getElementById("status").innerHTML = "<strong>Menunggu status...</strong>";
+      };
+
+      websocket.onclose = function () {
+        console.log("WebSocket terputus! Menghubungkan ulang...");
+        document.getElementById("status").innerHTML = "<strong>Terputus. Menghubungkan ulang...</strong>";
+        setTimeout(initWebSocket, 2000);
+      };
+
+      websocket.onerror = function (error) {
+        console.error("WebSocket Error:", error);
+      };
+
+      websocket.onmessage = function (event) {
+        console.log("Data diterima:", event.data);
+        try {
+          var data = JSON.parse(event.data);
+          if (data.led) {
+            document.getElementById("status").innerHTML = `<strong>${data.led}</strong>`;
+          }
+        } catch (e) {
+          console.error("Gagal parsing JSON:", e);
+        }
+      };
+    }
+
+    function sendMessage(message) {
+      if (websocket.readyState === WebSocket.OPEN) {
+        websocket.send(message);
+        console.log("Dikirim:", message);
+      } else {
+        console.error("WebSocket tidak terhubung.");
+      }
+    }
+  </script>
+</body>
+</html>
